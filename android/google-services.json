@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "1081417993388",
+    "project_id": "studai-d4e72",
+    "storage_bucket": "studai-d4e72.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081417993388:android:e548aa3fa2ab8912abe309",
+        "android_client_info": {
+          "package_name": "com.example.logintest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1081417993388-mne08jik2u0vmskn8rr967n9kf00hcs0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYX4E2zHqEBFMFKNJ58-WLZPp5qylDV-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1081417993388-mne08jik2u0vmskn8rr967n9kf00hcs0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081417993388:android:da5f15b5aaf541e5abe309",
+        "android_client_info": {
+          "package_name": "com.victorpudencio.teste1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1081417993388-mne08jik2u0vmskn8rr967n9kf00hcs0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYX4E2zHqEBFMFKNJ58-WLZPp5qylDV-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1081417993388-mne08jik2u0vmskn8rr967n9kf00hcs0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
