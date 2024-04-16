@@ -50,7 +50,7 @@ class _AllPostsPageState extends State<AllPostsPage> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => PostDetailsPage(post: post),
+            builder: (context) => PostDetailsPage(post: post, postId: '',),
           ),
         );
       },

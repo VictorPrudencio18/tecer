@@ -7,7 +7,7 @@ import 'post_model.dart'; // Certifique-se de que está apontando para o local c
 class PostDetailsPage extends StatefulWidget {
   final BlogPost post;
 
-  PostDetailsPage({required this.post});
+  PostDetailsPage({required this.post, required String postId});
 
   @override
   _PostDetailsPageState createState() => _PostDetailsPageState();

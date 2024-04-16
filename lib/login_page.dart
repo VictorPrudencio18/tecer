@@ -25,34 +25,33 @@ class _LoginPageState extends State<LoginPage> {
       ));
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
+@override
+Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        padding: EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [Colors.deepPurple, Colors.deepPurple],
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                FlutterLogo(size: 120),
-                SizedBox(height: 24),
-                Text(
-                  'Bem-vindo ao TECER!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+        body: Container(
+            padding: EdgeInsets.all(32),
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    colors: [Colors.deepPurple, Colors.deepPurple],
                 ),
+            ),
+            child: Center(
+                child: SingleChildScrollView(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                            Image.asset('assets/images/logo.png', width: 240), // Adiciona sua logo aqui
+                            SizedBox(height: 24),
+                            Text(
+                                'Bem-vindo ao TECER!',
+                                style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                ),
+                            ),
                 SizedBox(height: 8),
                 Text(
                   'Faça login para continuar',

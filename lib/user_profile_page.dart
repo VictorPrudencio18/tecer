@@ -272,7 +272,7 @@ class ProfileDetails extends StatelessWidget {
       childAspectRatio: 3,
       children: <Widget>[
         InfoTile(icon: Icons.location_city, title: "Cidade", value: userData['city'] ?? 'Cidade'),
-        InfoTile(icon: Icons.person_3_rounded, title: "Nome da Mãe", value: userData['motherName'] ?? 'Nome da mãe'),
+        //InfoTile(icon: Icons.person_3_rounded, title: "Nome da Mãe", value: userData['motherName'] ?? 'Nome da mãe'),
         InfoTile(icon: Icons.cake, title: "Idade", value: '${userData['age'] ?? 'Idade'} Anos'),
         InfoTile(icon: Icons.location_city, title: "Quilombo", value: userData['quilomboName'] ?? 'Quilombo'),
         InfoTile(icon: Icons.person, title: "Gênero", value: userData['gender'] ?? 'Gênero'),
