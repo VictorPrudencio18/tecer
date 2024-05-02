@@ -1,12 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:logintest/AdminManagementPage.dart';
-import 'package:logintest/CreateChallengePage.dart';
-import 'package:logintest/CreateQuizPage.dart';
-import 'package:logintest/LockedSectionPage.dart';
-import 'package:logintest/SmokingSurveyPage.dart';
-import 'package:logintest/quiz_model.dart';
 import 'create_post_page.dart';
 import 'all_posts_page.dart';
 import 'auth_service.dart';
@@ -36,10 +30,6 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _checkAdminStatus();
     _fetchAdminUsers();
-    _fetchQuizzes();
-    _fetchChallenges();
-    _checkSurveyStatus();  // Verifica o status do questionário
-
   }
 
   void _checkAdminStatus() async {
@@ -104,6 +94,28 @@ void _fetchQuizzes() async {
   }
 }
 
+
+
+  void _fetchChallenges() async {
+    var challengeSnapshot = await FirebaseFirestore.instance.collection('challenges').limit(5).get();
+    var challenges = challengeSnapshot.docs.map((doc) => Challenge.fromSnapshot(doc)).toList();
+    setState(() {
+      _challenges = challenges;
+    });
+  }
+
+void _fetchQuizzes() async {
+  try {
+    var quizSnapshot = await FirebaseFirestore.instance.collection('quizzes').limit(5).get();
+    var quizzes = quizSnapshot.docs.map((doc) => Quiz.fromSnapshot(doc)).toList();
+    print('Quizzes fetched: ${quizzes.length}');  // Verifique quantos quizzes foram carregados
+    setState(() {
+      _quizzes = quizzes;
+    });
+  } catch (e) {
+    print('Error fetching quizzes: $e');
+  }
+}
 
 
   void _fetchChallenges() async {
@@ -361,235 +373,35 @@ Widget _buildQuizCard(Quiz quiz) {
 
 
 
- Widget _buildChallengeCard(Challenge challenge) {
-  return InkWell(
-    onTap: () => Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChallengeDetailsPage(challenge: challenge, challengeId: '',),
-      ),
-    ),
-    child: Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.green.withOpacity(0.9), Colors.green.withOpacity(0.7)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.green.withOpacity(0.3),
-              spreadRadius: 3,
-              blurRadius: 7,
-              offset: Offset(0, 3), // changes position of shadow
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Bem vindo ao TECER'),
+        actions: [
+          if (_isAdmin)
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostPage())),
             ),
-          ],
-        ),
-        padding: EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              challenge.title,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    color: Colors.black,
-                    blurRadius: 2,
-                    offset: Offset(1, 1),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
-            // Botão "Ver mais"
-            Spacer(), // Espaço flexível para empurrar o botão para a parte inferior
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChallengeDetailsPage(challenge: challenge, challengeId: '',),
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                child: Text(
-                  "Ver mais",
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-  Widget _buildSingleCard(String title, String description, Color color) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
-      margin: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: Offset(0, 3),
+          IconButton(
+            icon: Icon(Icons.list),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AllPostsPage())),
           ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(title, style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold, color: Colors.white)),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(description, style: TextStyle(fontSize: 16.0, color: Colors.white70), textAlign: TextAlign.center),
-          ),
-        ],
+      body: Column(
+            children: [
+              _buildAdminHighlights(),
+              SizedBox(height: 16), // Espaço opcional entre os destaques e os cards de post
+              _buildHorizontalPostCards(), // Não mais envolvido por um Expanded
+              // Conteúdo adicional que virá no meio da página
+            ],
       ),
     );
   }
-    @override
-      Widget build(BuildContext context) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Bem vindo ao TECER'),
-            actions: [
-              if (_isAdmin)  // Botão de gerenciamento para administradores
-                IconButton(
-                  icon: Icon(Icons.dashboard),
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AdminManagementPage())),
-                ),
-              if (_isAdmin)  // Menu suspenso para criar post, quiz ou desafio
-                PopupMenuButton<String>(
-                  onSelected: (String value) {
-                    switch (value) {
-                      case 'post':
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostPage()));
-                        break;
-                      case 'quiz':
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CreateQuizPage()));
-                        break;
-                      case 'challenge':
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CreateChallengePage()));
-                        break;
-                    }
-                  },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    const PopupMenuItem<String>(value: 'post', child: Text('Criar Post')),
-                    const PopupMenuItem<String>(value: 'quiz', child: Text('Criar Quiz')),
-                    const PopupMenuItem<String>(value: 'challenge', child: Text('Criar Desafio')),
-                  ],
-                ),
-              IconButton(
-                icon: Icon(Icons.list),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AllPostsPage())),
-              ),
-            ],
-          ),
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text(
-                    "Administradores",
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8),
-                _buildAdminHighlights(),
-                SizedBox(height: 16),
-                _buildHorizontalPostCards(),
-                _buildFixedHorizontalCards(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text(
-                    "Prevenção contra o tabaco",
-                    style: TextStyle(
-                      fontSize: 20.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                ),
-               if (_hasCompletedSurvey == false) // Se não completou o questionário
-  ElevatedButton(
-    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SmokingSurveyPage())),
-    child: Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 15),
-      child: Center(
-        child: Text(
-          'Completar Questionário Sobre Fumo',
-          style: TextStyle(fontSize: 16),
-        ),
-      ),
-    ),
-    style: ElevatedButton.styleFrom(
-      foregroundColor: Colors.white, backgroundColor: Colors.blue, // Cor do texto
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10), // Borda arredondada
-      ),
-    ),
-  ),
-      if (_hasCompletedSurvey == true) // Se completou o questionário
-        ElevatedButton(
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LockedSectionPage())),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 15),
-            child: Center(
-              child: Text(
-                'Acessar Seção Personalizada',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white, backgroundColor: Colors.green, // Cor do texto
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10), // Borda arredondada
-            ),
-          ),
-        ),
+}
 
-                    ],
-            ),
-          ),
-        );
-      }
-    }
 class TimeFormat {
     final String time;
   final IconData icon;
