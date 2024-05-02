@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class Challenge {
@@ -15,7 +16,7 @@ class Challenge {
 class ChallengeDetailsPage extends StatelessWidget {
   final Challenge challenge;
 
-  ChallengeDetailsPage({required this.challenge});
+  ChallengeDetailsPage({required this.challenge, required String challengeId});
 
   @override
   Widget build(BuildContext context) {

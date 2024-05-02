@@ -33,7 +33,7 @@ class _RegisterPageStep1State extends State<RegisterPageStep1> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Register - Step 1',
+          'Registro - parte 1',
           style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -114,7 +114,7 @@ class _RegisterPageStep1State extends State<RegisterPageStep1> {
                   ),
                 ),
                 child: Text(
-                  'Continue to Step 2',
+                  'Continur o registro',
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,

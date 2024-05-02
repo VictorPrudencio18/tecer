@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'post_model.dart'; // Substitua pelo caminho correto do seu modelo de post
 import 'post_details_page.dart'; // Substitua pelo caminho correto da página de detalhes do post
@@ -16,7 +17,7 @@ class PostCardWidget extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PostDetailsPage(post: post),
+            builder: (context) => PostDetailsPage(post: post, postId: '',),
           ),
         );
       },
@@ -82,5 +83,4 @@ class PostCardWidget extends StatelessWidget {
         ),
       ),
     );
-  }
-}
+    }  }

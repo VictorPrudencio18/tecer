@@ -35,7 +35,7 @@ class _RankingPageState extends State<RankingPage> {
             SizedBox(height: 10),
             Expanded(child: buildGlobalRanking()),
             SizedBox(height: 20),
-            _buildSectionHeader('Ranking por Cidade'),
+            _buildSectionHeader('Ranking por Comunidade'),
             SizedBox(height: 10),
             Expanded(child: buildCityRanking()),
           ],

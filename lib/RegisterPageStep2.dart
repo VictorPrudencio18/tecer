@@ -19,6 +19,7 @@ class _RegisterPageStep2State extends State<RegisterPageStep2> {
   final _ageController = TextEditingController();
   final _quilomboNameController = TextEditingController();
   String _gender = 'Masculino'; // Inicializado com "Masculino"
+  String _community = 'Queimada Nova'; // Inicializado com a primeira opção
 
   Future<void> _saveAdditionalInformation() async {
     if (_formKey.currentState!.validate()) {
@@ -31,6 +32,7 @@ class _RegisterPageStep2State extends State<RegisterPageStep2> {
           'age': int.tryParse(_ageController.text),
           'quilomboName': _quilomboNameController.text,
           'gender': _gender,
+          'community': _community, // Adicionado para salvar a comunidade escolhida
         }, SetOptions(merge: true));
         Navigator.of(context).pushReplacementNamed('/home');
       } catch (e) {
@@ -116,10 +118,10 @@ class _RegisterPageStep2State extends State<RegisterPageStep2> {
               SizedBox(height: 20),
               TextFormField(
                 controller: _quilomboNameController,
-                decoration: InputDecoration(labelText: 'Nome do quilombo'),
+                decoration: InputDecoration(labelText: 'Cidade'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Por favor, insira o nome do seu quilombo';
+                    return 'Por favor, insira o nome da sua comunidade';
                   }
                   return null;
                 },
@@ -140,6 +142,23 @@ class _RegisterPageStep2State extends State<RegisterPageStep2> {
                   });
                 },
                 decoration: InputDecoration(labelText: 'Gênero'),
+              ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: _community,
+                items: <String>['Queimada Nova', 'Paquetá', 'Piripiri', 'Lagoa de São Francisco']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _community = newValue!;
+                  });
+                },
+                decoration: InputDecoration(labelText: 'Comunidade'),
               ),
               SizedBox(height: 20),
               Center(

@@ -1,7 +1,12 @@
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:logintest/AdminManagementPage.dart';
 import 'package:logintest/CreateChallengePage.dart';
 import 'package:logintest/CreateQuizPage.dart';
+import 'package:logintest/LockedSectionPage.dart';
+import 'package:logintest/SmokingSurveyPage.dart';
 import 'package:logintest/quiz_model.dart';
 import 'create_post_page.dart';
 import 'all_posts_page.dart';
@@ -21,6 +26,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   bool _isAdmin = false;
+  bool? _hasCompletedSurvey;  // Para controlar o acesso à seção bloqueada
+
   List<AdminUserModel> _adminUsers = [];
   List<Quiz> _quizzes = [];
   List<Challenge> _challenges = [];
@@ -28,16 +35,29 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    deleteExpiredQuizzes(); // Chamada do método para deletar quizzes expirados na inicialização
     _checkAdminStatus();
     _fetchAdminUsers();
     _fetchQuizzes();
     _fetchChallenges();
+    _checkSurveyStatus();
   }
 
   void _checkAdminStatus() async {
     bool isAdmin = await _authService.isUserAdmin();
     setState(() {
       _isAdmin = isAdmin;
+    });
+  }
+
+  void _checkSurveyStatus() async {
+    var userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .get();
+    var userData = userDoc.data();
+    setState(() {
+      _hasCompletedSurvey = userData?['hasCompletedSurvey'] ?? false;
     });
   }
 
@@ -54,16 +74,48 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-void _fetchQuizzes() async {
+  void _fetchQuizzes() async {
   try {
-    var quizSnapshot = await FirebaseFirestore.instance.collection('quizzes').limit(5).get();
-    var quizzes = quizSnapshot.docs.map((doc) => Quiz.fromSnapshot(doc)).toList();
-    print('Quizzes fetched: ${quizzes.length}');  // Verifique quantos quizzes foram carregados
+    var currentTime = DateTime.now();
+    var startOfDay = DateTime(currentTime.year, currentTime.month, currentTime.day);
+    var currentTimeMillis = currentTime.millisecondsSinceEpoch;
+    var startOfDayMillis = startOfDay.millisecondsSinceEpoch;
+
+    // Busca todos os quizes que ainda não terminaram
+    var quizSnapshot = await FirebaseFirestore.instance
+        .collection('quizzes')
+        .where('endDate', isGreaterThan: currentTimeMillis)
+        .orderBy('endDate')
+        .get();
+
+    // Filtra localmente apenas os quizes cuja `startDate` está no passado
+    var quizzes = quizSnapshot.docs.map((doc) => Quiz.fromSnapshot(doc))
+                    .where((quiz) => quiz.startDate.millisecondsSinceEpoch <= startOfDayMillis)
+                    .toList();
+
     setState(() {
       _quizzes = quizzes;
     });
+
+    // Deleta quizes expirados
+    deleteExpiredQuizzes();
   } catch (e) {
     print('Error fetching quizzes: $e');
+  }
+}
+
+void deleteExpiredQuizzes() async {
+  var currentTimeMillis = DateTime.now().millisecondsSinceEpoch;
+
+  // Busca quizes com `endDate` no passado
+  var expiredQuizSnapshot = await FirebaseFirestore.instance
+      .collection('quizzes')
+      .where('endDate', isLessThan: currentTimeMillis)
+      .get();
+
+  // Exclui cada quiz expirado
+  for (var doc in expiredQuizSnapshot.docs) {
+    await doc.reference.delete();
   }
 }
 
@@ -204,6 +256,7 @@ TimeFormat _formatRemainingTime(DateTime endDate) {
     return TimeFormat('$days:$hours', icon); // Simplified format
   }
 }
+
 Widget _buildQuizCard(Quiz quiz) {
   TimeFormat timeInfo = _formatRemainingTime(quiz.endDate);
   return InkWell(
@@ -219,102 +272,110 @@ Widget _buildQuizCard(Quiz quiz) {
         borderRadius: BorderRadius.circular(15.0),
       ),
       margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.deepPurple.withOpacity(0.9),
-              Color.fromARGB(255, 31, 8, 72).withOpacity(0.7)
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 300), // Limita a largura do card
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.deepPurple.withOpacity(0.9),
+                Color.fromARGB(255, 31, 8, 72).withOpacity(0.7),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 6,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 6,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        padding: EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              quiz.title,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withOpacity(0.5),
-                    blurRadius: 4,
-                    offset: Offset(2, 2),
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min, // Assegura que o card encolha para caber o conteúdo
+            children: [
+              Flexible(
+                child: Text(
+                  quiz.title,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 4,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
                   ),
-                ],
+                  overflow: TextOverflow.ellipsis, // Adiciona reticências se o texto for muito longo
+                  softWrap: false,
+                  maxLines: 1,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.redAccent,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+              SizedBox(height: 10), // Ajuste o espaçamento conforme necessário
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(timeInfo.icon, size: 16, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      timeInfo.time,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              padding: EdgeInsets.all(8),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(timeInfo.icon, size: 16, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    timeInfo.time,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              Spacer(),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => QuizDetailsPage(quizId: quiz.id),
                     ),
                   ),
-                ],
-              ),
-            ),
-            Spacer(),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QuizDetailsPage(quizId: quiz.id),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.blue, backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.blue, backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                child: Text(
-                  "Ver mais",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  child: Text(
+                    "Ver mais",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
@@ -322,13 +383,12 @@ Widget _buildQuizCard(Quiz quiz) {
 }
 
 
-
  Widget _buildChallengeCard(Challenge challenge) {
   return InkWell(
     onTap: () => Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ChallengeDetailsPage(challenge: challenge),
+        builder: (context) => ChallengeDetailsPage(challenge: challenge, challengeId: '',),
       ),
     ),
     child: Card(
@@ -343,11 +403,11 @@ Widget _buildQuizCard(Quiz quiz) {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.green.withOpacity(0.9), Colors.green.withOpacity(0.7)],
+            colors: [ const Color.fromARGB(255, 181, 122, 63).withOpacity(0.9), Color.fromARGB(255, 181, 122, 63).withOpacity(0.7)],
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.green.withOpacity(0.3),
+              color: Color.fromARGB(255, 181, 122, 63).withOpacity(0.3),
               spreadRadius: 3,
               blurRadius: 7,
               offset: Offset(0, 3), // changes position of shadow
@@ -382,7 +442,7 @@ Widget _buildQuizCard(Quiz quiz) {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ChallengeDetailsPage(challenge: challenge),
+                    builder: (context) => ChallengeDetailsPage(challenge: challenge, challengeId: '',),
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -394,7 +454,7 @@ Widget _buildQuizCard(Quiz quiz) {
                 child: Text(
                   "Ver mais",
                   style: TextStyle(
-                    color: Colors.green,
+                    color: const Color.fromARGB(255, 181, 116, 63),
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -436,69 +496,122 @@ Widget _buildQuizCard(Quiz quiz) {
       ),
     );
   }
-
-  @override
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Bem vindo ao TECER'),
-      actions: [
-        if (_isAdmin)
-          PopupMenuButton<String>(
-            onSelected: (String value) {
-              switch (value) {
-                case 'post':
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostPage()));
-                  break;
-                case 'quiz':
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateQuizPage()));
-                  break;
-                case 'challenge':
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => CreateChallengePage()));
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(value: 'post', child: Text('Criar Post')),
-              const PopupMenuItem<String>(value: 'quiz', child: Text('Criar Quiz')),
-              const PopupMenuItem<String>(value: 'challenge', child: Text('Criar Desafio')),
-              //const PopupMenuItem<String>(value: 'Stories', child: Text('Criar Stories')),
+    @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Bem vindo ao TECER'),
+            actions: [
+              if (_isAdmin)  // Botão de gerenciamento para administradores
+                IconButton(
+                  icon: Icon(Icons.dashboard),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AdminManagementPage())),
+                ),
+              if (_isAdmin)  // Menu suspenso para criar post, quiz ou desafio
+                PopupMenuButton<String>(
+                  onSelected: (String value) {
+                    switch (value) {
+                      case 'post':
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostPage()));
+                        break;
+                      case 'quiz':
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CreateQuizPage()));
+                        break;
+                      case 'challenge':
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CreateChallengePage()));
+                        break;
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(value: 'post', child: Text('Criar Post')),
+                    const PopupMenuItem<String>(value: 'quiz', child: Text('Criar Quiz')),
+                    const PopupMenuItem<String>(value: 'challenge', child: Text('Criar Desafio')),
+                  ],
+                ),
+              IconButton(
+                icon: Icon(Icons.list),
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AllPostsPage())),
+              ),
             ],
           ),
-        IconButton(
-          icon: Icon(Icons.list),
-          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AllPostsPage())),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text(
+                    "Administradores",
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 8),
+                _buildAdminHighlights(),
+                SizedBox(height: 16),
+                _buildHorizontalPostCards(),
+                _buildFixedHorizontalCards(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Text(
+                    "Prevenção contra o tabaco",
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                ),
+               if (_hasCompletedSurvey == false) // Se não completou o questionário
+  ElevatedButton(
+    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SmokingSurveyPage())),
+    child: Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 15),
+      child: Center(
+        child: Text(
+          'Completar Questionário Sobre Fumo',
+          style: TextStyle(fontSize: 16),
         ),
-      ],
+      ),
     ),
-    body: SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              "Administradores",
-              style: TextStyle(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
+    style: ElevatedButton.styleFrom(
+      foregroundColor: Colors.white, backgroundColor: Colors.blue, // Cor do texto
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10), // Borda arredondada
+      ),
+    ),
+  ),
+      if (_hasCompletedSurvey == true) // Se completou o questionário
+        ElevatedButton(
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LockedSectionPage())),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 15),
+            child: Center(
+              child: Text(
+                'Acessar Seção Personalizada',
+                style: TextStyle(fontSize: 16),
               ),
             ),
           ),
-          SizedBox(height: 8),
-          _buildAdminHighlights(),
-          SizedBox(height: 16),
-          _buildHorizontalPostCards(),
-          _buildFixedHorizontalCards(),
-        ],
-      ),
-    ),
-  );
-}
-}
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white, backgroundColor: Colors.blue, // Cor do texto
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10), // Borda arredondada
+            ),
+          ),
+        ),
 
+                    ],
+            ),
+          ),
+        );
+      }
+    }
 class TimeFormat {
     final String time;
   final IconData icon;

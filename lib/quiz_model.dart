@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -26,13 +27,15 @@ class Quiz {
   String id;
   String title;
   List<Question> questions;
-  DateTime endDate;  // Adicione esta linha
+  DateTime startDate;  // Adicione esta linha
+  DateTime endDate;
 
   Quiz({
     required this.id,
     required this.title,
     required this.questions,
-    required this.endDate,  // Adicione este parâmetro
+    required this.startDate,  // Adicione este parâmetro
+    required this.endDate,
   });
 
   static Quiz fromSnapshot(DocumentSnapshot snapshot) {
@@ -41,10 +44,12 @@ class Quiz {
       id: snapshot.id,
       title: data['title'],
       questions: List<Question>.from(data['questions'].map((q) => Question.fromMap(q))),
-      endDate: DateTime.fromMillisecondsSinceEpoch(data['endDate']),  // Converter timestamp para DateTime
+      startDate: DateTime.fromMillisecondsSinceEpoch(data['startDate']),  // Converta timestamp para DateTime
+      endDate: DateTime.fromMillisecondsSinceEpoch(data['endDate']),
     );
   }
 }
+
 
 
 class QuizCard extends StatelessWidget {
@@ -66,7 +71,7 @@ class QuizCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.blue.withOpacity(0.8), Colors.blue.withOpacity(0.5)],
+            colors: [const Color.fromARGB(255, 0, 0, 0).withOpacity(0.8), const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5)],
           ),
         ),
         child: Padding(
