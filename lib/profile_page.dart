@@ -53,12 +53,12 @@ class HeaderSection extends StatelessWidget {
           SizedBox(height: 10),
           Text(
             'Zeshan H.',
-            style: themeData.textTheme.headline6?.copyWith(color: Colors.white) ??
+            style: themeData.textTheme.titleLarge?.copyWith(color: Colors.white) ??
                    TextStyle(color: Colors.white, fontSize: 24), // Fallback style
           ),
           Text(
             'ID Médico',
-            style: themeData.textTheme.subtitle1?.copyWith(color: Colors.white70) ??
+            style: themeData.textTheme.titleMedium?.copyWith(color: Colors.white70) ??
                    TextStyle(color: Colors.white70, fontSize: 16), // Fallback style
           ),
         ],
