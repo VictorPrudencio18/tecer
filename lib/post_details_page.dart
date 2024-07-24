@@ -224,17 +224,17 @@ class _PostDetailsPageState extends State<PostDetailsPage> {
               children: [
                 Text(
                   widget.post.title,
-                  style: Theme.of(context).textTheme.headline6,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
                 SizedBox(height: 10),
                 Text(
                   widget.post.subtitle,
-                  style: Theme.of(context).textTheme.subtitle1,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 SizedBox(height: 20),
                 Text(
                   widget.post.content,
-                  style: Theme.of(context).textTheme.bodyText2,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 SizedBox(height: 20),
                 ...questionWidgets,
