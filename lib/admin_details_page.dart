@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'admin_user_model.dart';
@@ -89,4 +90,3 @@ class AdminDetailsPage extends StatelessWidget {
   }
 }
 
-// Certifique-se de que o modelo AdminUserModel esteja definido com todas as propriedades necessárias.

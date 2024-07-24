@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart'; // Para formatar a data
+import 'package:intl/intl.dart';
 
-class LockedSectionPage extends StatefulWidget {
+class NonSmokerGoalsPage extends StatefulWidget {
   @override
-  _LockedSectionPageState createState() => _LockedSectionPageState();
+  _NonSmokerGoalsPageState createState() => _NonSmokerGoalsPageState();
 }
 
-class _LockedSectionPageState extends State<LockedSectionPage> {
+class _NonSmokerGoalsPageState extends State<NonSmokerGoalsPage> {
   Map<String, dynamic>? userData;
   final TextEditingController _goalController = TextEditingController();
   final TextEditingController _customGoalController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _rewardController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController(); // Novo controlador para a data
+  final TextEditingController _dateController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  DateTime? _selectedDate; // Variável para armazenar a data selecionada
-  int? _editingIndex; // Índice da meta que está sendo editada
+  DateTime? _selectedDate;
+  int? _editingIndex;
 
   @override
   void initState() {
@@ -45,7 +45,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
     if (_formKey.currentState!.validate()) {
       int goal = int.tryParse(_goalController.text) ?? 0;
       FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).update({
-        'quitGoal': goal,
+        'healthGoal': goal,
         'currentStreak': 0,
       }).then((_) {
         _fetchUserData();
@@ -67,8 +67,8 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
         _customGoalController.clear();
         _descriptionController.clear();
         _rewardController.clear();
-        _dateController.clear(); // Limpar o controlador da data
-        _selectedDate = null; // Resetar a data selecionada
+        _dateController.clear();
+        _selectedDate = null;
         _fetchUserData();
       });
     }
@@ -79,7 +79,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
       List<dynamic> customGoals = List.from(userData!['customGoals']);
       customGoals[_editingIndex!] = {
         'goal': _customGoalController.text,
-        'progress': customGoals[_editingIndex!]['progress'], // Manter o progresso atual
+        'progress': customGoals[_editingIndex!]['progress'],
         'description': _descriptionController.text,
         'reward': _rewardController.text,
         'date': _selectedDate != null ? _selectedDate!.toIso8601String() : customGoals[_editingIndex!]['date'],
@@ -92,7 +92,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
         _rewardController.clear();
         _dateController.clear();
         _selectedDate = null;
-        _editingIndex = null; // Resetar o índice de edição
+        _editingIndex = null;
         _fetchUserData();
       });
     }
@@ -223,7 +223,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
   void _updateGoalProgress(int delta) {
     if (userData != null) {
       int currentStreak = userData!['currentStreak'] ?? 0;
-      int quitGoal = userData!['quitGoal'] ?? 1;
+      int healthGoal = userData!['healthGoal'] ?? 1;
       currentStreak += delta;
       if (currentStreak < 0) {
         currentStreak = 0;
@@ -257,11 +257,8 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            'Seção Personalizada',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: const Color.fromARGB(255, 82, 34, 255),
+          title: Text('Metas de Saúde'),
+          backgroundColor: Colors.deepPurple,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {
@@ -287,11 +284,11 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Bem-vindo, ${userData!['name']}',
+                      Text('Parabéns por não fumar, ${userData!['name']}!',
                           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black)),
                       SizedBox(height: 20),
                       Text(
-                        'Meta para Parar de Fumar',
+                        'Metas de Saúde',
                         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                       SizedBox(height: 10),
@@ -300,7 +297,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
                         child: TextFormField(
                           controller: _goalController,
                           decoration: InputDecoration(
-                            labelText: 'Defina sua meta de dias sem fumar',
+                            labelText: 'Defina sua meta de dias para um novo hábito saudável',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10.0),
                             ),
@@ -353,7 +350,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
                       ),
                       SizedBox(height: 20),
                       LinearProgressIndicator(
-                        value: (userData!['currentStreak'] ?? 0) / (userData!['quitGoal'] ?? 1),
+                        value: (userData!['currentStreak'] ?? 0) / (userData!['healthGoal'] ?? 1),
                         backgroundColor: Colors.grey[200],
                         minHeight: 20,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
@@ -361,7 +358,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: 5),
                         child: Text(
-                          'Progresso: ${userData!['currentStreak']} de ${userData!['quitGoal']} dias',
+                          'Progresso: ${userData!['currentStreak']} de ${userData!['healthGoal']} dias',
                           style: TextStyle(color: Colors.black),
                         ),
                       ),
@@ -503,7 +500,7 @@ class _LockedSectionPageState extends State<LockedSectionPage> {
                 ],
                 SizedBox(height: 10),
                 LinearProgressIndicator(
-                  value: goal['progress'] / (userData!['quitGoal'] ?? 1),
+                  value: goal['progress'] / (userData!['healthGoal'] ?? 1),
                   backgroundColor: Colors.grey[200],
                   minHeight: 20,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),

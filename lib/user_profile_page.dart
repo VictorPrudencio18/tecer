@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:logintest/ReadPostsPage.dart';
 import 'package:logintest/edit_profile_page.dart';
+import 'package:logintest/login_page.dart'; // Certifique-se de importar a página de login
 
 class UserProfilePage extends StatefulWidget {
   @override
@@ -29,41 +30,47 @@ class _UserProfilePageState extends State<UserProfilePage> {
     return {};
   }
 
-      Future<int> _fetchUserGlobalRank(String userId) async {
-        QuerySnapshot snapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .orderBy('points', descending: true)
-            .get();
+  Future<int> _fetchUserGlobalRank(String userId) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .orderBy('points', descending: true)
+        .get();
 
-        int rank = 1;
-        for (var doc in snapshot.docs) {
-          if (doc.id == userId) {
-            return rank;
-          }
-          rank++;
-        }
-
-        return -1; // Retorne -1 caso o usuário não seja encontrado no ranking
+    int rank = 1;
+    for (var doc in snapshot.docs) {
+      if (doc.id == userId) {
+        return rank;
       }
+      rank++;
+    }
 
-      Future<int> _fetchUserCityRank(String userId, String city) async {
-        QuerySnapshot snapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .where('city', isEqualTo: city)
-            .orderBy('points', descending: true)
-            .get();
+    return -1; // Retorne -1 caso o usuário não seja encontrado no ranking
+  }
 
-        int rank = 1;
-        for (var doc in snapshot.docs) {
-          if (doc.id == userId) {
-            return rank;
-          }
-          rank++;
-        }
+  Future<int> _fetchUserCityRank(String userId, String city) async {
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('city', isEqualTo: city)
+        .orderBy('points', descending: true)
+        .get();
 
-        return -1; // Retorne -1 caso o usuário não seja encontrado no ranking
+    int rank = 1;
+    for (var doc in snapshot.docs) {
+      if (doc.id == userId) {
+        return rank;
       }
+      rank++;
+    }
 
+    return -1; // Retorne -1 caso o usuário não seja encontrado no ranking
+  }
+
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +96,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
               }
             },
           ),
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _logout,
+          ),
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -108,29 +119,25 @@ class _UserProfilePageState extends State<UserProfilePage> {
       ),
     );
   }
-  
-Widget _buildUserProfile(BuildContext context, Map<String, dynamic> userData) {
-  int points = userData['points'] ?? 0;
-  List<String> badges = List<String>.from(userData['badges'] ?? []);
 
-  String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-  String city = userData['city'] ?? '';
+  Widget _buildUserProfile(BuildContext context, Map<String, dynamic> userData) {
+    int points = userData['points'] ?? 0;
+    List<String> badges = List<String>.from(userData['badges'] ?? []);
 
-  return SingleChildScrollView(
-    child: Column(
-      children: [
-        ProfileDetails(userData),
-        Divider(),
-        _buildRankingSection(context, points, badges),
-        // A seção ReadPosts foi removida da visualização direta
-        _buildMenuSection(context, userId, city), // Passa os argumentos corretos aqui
-        // Exibe o conteúdo baseado na seleção do menu
-        // Adicione aqui outras seções conforme necessário
-      ],
-    ),
-  );
-}
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    String city = userData['city'] ?? '';
 
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          ProfileDetails(userData),
+          Divider(),
+          _buildRankingSection(context, points, badges),
+          _buildMenuSection(context, userId, city),
+        ],
+      ),
+    );
+  }
 
   Widget _buildRankingSection(BuildContext context, int points, List<String> badges) {
     return Column(
@@ -158,71 +165,60 @@ Widget _buildUserProfile(BuildContext context, Map<String, dynamic> userData) {
     );
   }
 
-Widget _buildMenuSection(BuildContext context, String userId, String city) {
-  return Container(
-    padding: EdgeInsets.symmetric(vertical: 10.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton(
-          child: Text('Ranking Geral'),
-          onPressed: () async {
-            try {
-              int rank = await _fetchUserGlobalRank(userId);
-              _showRankDialog(context, 'Ranking Geral', rank);
-            } catch (error) {
-              // Handle errors, e.g., display an error message
-              print('Error fetching global rank: $error'); 
-            }
-          },
-        ),
-        // ... Similar changes for other buttons
+  Widget _buildMenuSection(BuildContext context, String userId, String city) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ElevatedButton(
+            child: Text('Ranking Geral'),
+            onPressed: () async {
+              try {
+                int rank = await _fetchUserGlobalRank(userId);
+                _showRankDialog(context, 'Ranking Geral', rank);
+              } catch (error) {
+                print('Error fetching global rank: $error');
+              }
+            },
+          ),
+          ElevatedButton(
+            child: Text('Posts Lidos'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ReadPostsPage(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
-        ElevatedButton(
-          child: Text('Posts Lidos'),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ReadPostsPage(),
-              ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
+  void _showRankDialog(BuildContext context, String title, int rank) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: rank != -1
+              ? Text('Sua posição é: $rank')
+              : Text('Você ainda não está no ranking.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Fechar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
-
-
-    void _showRankDialog(BuildContext context, String title, int rank) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text(title),
-            content: rank != -1
-                ? Text('Sua posição é: $rank')
-                : Text('Você ainda não está no ranking.'),
-            actions: <Widget>[
-              TextButton(
-                child: Text('Fechar'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
-    }
-}
-
-void _navigateToReadPosts(BuildContext context, String userId) {
-  // Navegar para a página de posts lidos
-  // Você precisará implementar esta página e definir a rota
-  Navigator.of(context).pushNamed('/readPostsPage', arguments: userId);
-}
-
 
 class ProfileDetails extends StatelessWidget {
   final Map<String, dynamic> userData;
@@ -259,7 +255,7 @@ class ProfileDetails extends StatelessWidget {
             ],
           ),
         ),
-        _buildInfoGrid(userData), // Chamada ao novo método que cria a GridView
+        _buildInfoGrid(userData),
       ],
     );
   }
@@ -272,15 +268,13 @@ class ProfileDetails extends StatelessWidget {
       childAspectRatio: 3,
       children: <Widget>[
         InfoTile(icon: Icons.location_city, title: "Cidade", value: userData['city'] ?? 'Cidade'),
-        //InfoTile(icon: Icons.person_3_rounded, title: "Nome da Mãe", value: userData['motherName'] ?? 'Nome da mãe'),
         InfoTile(icon: Icons.cake, title: "Idade", value: '${userData['age'] ?? 'Idade'} Anos'),
-        InfoTile(icon: Icons.location_city, title: "Quilombo", value: userData['quilomboName'] ?? 'Quilombo'),
+        InfoTile(icon: Icons.location_city, title: "Comunidade", value: userData['community'] ?? 'Comunidade'),
         InfoTile(icon: Icons.person, title: "Gênero", value: userData['gender'] ?? 'Gênero'),
       ],
     );
   }
 }
-
 
 class InfoTile extends StatelessWidget {
   final IconData icon;

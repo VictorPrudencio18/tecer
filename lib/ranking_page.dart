@@ -35,9 +35,9 @@ class _RankingPageState extends State<RankingPage> {
             SizedBox(height: 10),
             Expanded(child: buildGlobalRanking()),
             SizedBox(height: 20),
-            _buildSectionHeader('Ranking por Cidade'),
+            _buildSectionHeader('Ranking por Comunidade'),
             SizedBox(height: 10),
-            Expanded(child: buildCityRanking()),
+            Expanded(child: buildCommunityRanking()), // Renomeado para buildCommunityRanking
           ],
         ),
       ),
@@ -75,7 +75,7 @@ class _RankingPageState extends State<RankingPage> {
     );
   }
 
-  Widget buildCityRanking() {
+  Widget buildCommunityRanking() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -85,24 +85,27 @@ class _RankingPageState extends State<RankingPage> {
         if (!snapshot.hasData)
           return Center(child: CircularProgressIndicator());
 
-        Map<String, List<DocumentSnapshot>> usersByCity = {};
+        Map<String, List<DocumentSnapshot>> usersByCommunity = {};
         for (var doc in snapshot.data!.docs) {
-          String city = doc['city'] ?? 'Desconhecido';
-          (usersByCity[city] ??= []).add(doc);
+          var data = doc.data() as Map<String, dynamic>?;
+          if (data != null && data.containsKey('community')) {
+            String community = data['community'];
+            (usersByCommunity[community] ??= []).add(doc);
+          }
         }
 
         return ListView.builder(
-          itemCount: usersByCity.entries.length,
+          itemCount: usersByCommunity.entries.length,
           itemBuilder: (context, index) {
-            var entry = usersByCity.entries.elementAt(index);
-            return buildCityRankingCard(entry.key, entry.value);
+            var entry = usersByCommunity.entries.elementAt(index);
+            return buildCommunityRankingCard(entry.key, entry.value);
           },
         );
       },
     );
   }
 
-  Widget buildCityRankingCard(String cityName, List<DocumentSnapshot> users) {
+  Widget buildCommunityRankingCard(String communityName, List<DocumentSnapshot> users) {
     return Card(
       elevation: 4,
       margin: EdgeInsets.symmetric(vertical: 8),
@@ -112,7 +115,7 @@ class _RankingPageState extends State<RankingPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              cityName,
+              communityName,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -121,7 +124,7 @@ class _RankingPageState extends State<RankingPage> {
             SizedBox(height: 8),
             Column(
               children: users
-                  .map((user) => buildCityUserTile(user))
+                  .map((user) => buildCommunityUserTile(user))
                   .toList(),
             ),
           ],
@@ -130,22 +133,25 @@ class _RankingPageState extends State<RankingPage> {
     );
   }
 
-  Widget buildCityUserTile(DocumentSnapshot user) {
+  Widget buildCommunityUserTile(DocumentSnapshot user) {
+    var data = user.data() as Map<String, dynamic>?;
+
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: Colors.deepPurple,
-        child: Text(user['name'][0],
+        child: Text(data != null ? data['name'][0] : '',
             style: TextStyle(color: Colors.white)),
       ),
-      title: Text(user['name']),
+      title: Text(data != null ? data['name'] : 'Desconhecido'),
       trailing: Chip(
-        label: Text('${user['points']} pontos'),
+        label: Text('${data != null ? data['points'] : 0} pontos'),
         backgroundColor: Colors.amber,
       ),
     );
   }
 
   Widget buildRankingTile(DocumentSnapshot user, int rank) {
+    var data = user.data() as Map<String, dynamic>?;
     Color rankColor = rank == 1
         ? Colors.orange
         : rank == 2
@@ -153,12 +159,13 @@ class _RankingPageState extends State<RankingPage> {
             : rank == 3
                 ? Colors.brown
                 : Colors.grey;
+
     return Card(
       elevation: 4,
       margin: EdgeInsets.symmetric(vertical: 8),
       child: ListTile(
-        title: Text(user['name']),
-        subtitle: Text('Pontos: ${user['points']}'),
+        title: Text(data != null ? data['name'] : 'Desconhecido'),
+        subtitle: Text('Pontos: ${data != null ? data['points'] : 0}'),
         trailing: Chip(
           label: Text('#$rank'),
           backgroundColor: rankColor,

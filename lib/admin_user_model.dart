@@ -1,19 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AdminUserModel {
-  String uid;
-  String name;
-  String surname;
-  String photoUrl;
-  int age;
-  String city;
-  String gender;
+  final String id;
+  final String name;
+  final String photoUrl;
+  final String surname;
+  final int age;
+  final String city;
+  final String gender;
 
   AdminUserModel({
-    required this.uid,
+    required this.id,
     required this.name,
-    required this.surname,
     required this.photoUrl,
+    required this.surname,
     required this.age,
     required this.city,
     required this.gender,
@@ -22,11 +22,11 @@ class AdminUserModel {
   factory AdminUserModel.fromSnapshot(DocumentSnapshot snapshot) {
     var data = snapshot.data() as Map<String, dynamic>;
     return AdminUserModel(
-      uid: snapshot.id,
+      id: snapshot.id,
       name: data['name'] ?? '',
+      photoUrl: data['photoUrl'] ?? '',
       surname: data['surname'] ?? '',
-      photoUrl: data['photoUrl'] ?? 'https://via.placeholder.com/150',
-      age: data['age'] ?? 0,
+      age: int.tryParse(data['age'].toString()) ?? 0,
       city: data['city'] ?? '',
       gender: data['gender'] ?? '',
     );

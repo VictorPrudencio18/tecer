@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'RegisterPageStep1.dart';
+import 'termsPageNoRegis.dart';
+import 'TermsPage.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -20,47 +22,63 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Failed to sign in: ${e.toString()}"),
+        content: Text("Failed to sign in with email and password: ${e.toString()}"),
         backgroundColor: Colors.red,
       ));
     }
   }
-@override
-Widget build(BuildContext context) {
+
+  void _navigateToTermsPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => TermsPageWithRegister()),
+    );
+  }
+
+  void _navigateToTermsPageNoRegis() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => TermsPageWithoutRegister()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-        body: Container(
-            padding: EdgeInsets.all(32),
-            decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [Colors.deepPurple, Colors.deepPurple],
+      body: Container(
+        padding: EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment(1, 0.5), // Foco do degradê na parte superior
+            colors: [
+              Color.fromARGB(255, 243, 211, 250), // Cor clara no topo
+              Colors.deepPurple, // Cor mais escura ocupando a maior parte
+            ],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Image.asset('assets/images/11.png', width: 350), // Adiciona sua logo aqui
+                SizedBox(height: 24),
+                const Text(
+                  'Bem-vindo ao TECER!',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-            ),
-            child: Center(
-                child: SingleChildScrollView(
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                            Image.asset('assets/images/logo.png', width: 240), // Adiciona sua logo aqui
-                            SizedBox(height: 24),
-                            Text(
-                                'Bem-vindo ao TECER!',
-                                style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                ),
-                            ),
                 SizedBox(height: 8),
-                Text(
+                const Text(
                   'Faça login para continuar',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white70,
                   ),
                 ),
-                SizedBox(height: 48),
+                SizedBox(height: 10),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -81,7 +99,7 @@ Widget build(BuildContext context) {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
@@ -102,7 +120,7 @@ Widget build(BuildContext context) {
                     ),
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: _login,
                   style: ElevatedButton.styleFrom(
@@ -117,9 +135,17 @@ Widget build(BuildContext context) {
                 ),
                 SizedBox(height: 16),
                 TextButton(
-                  onPressed: () => Navigator.of(context).pushNamed('/registerStep1'),
-                  child: Text(
+                  onPressed: _navigateToTermsPage,
+                  child: const Text(
                     'Não tem uma conta? Registre-se aqui',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextButton(
+                  onPressed: _navigateToTermsPageNoRegis,
+                  child: const Text(
+                    'Leia os Termos de Compromisso',
                     style: TextStyle(color: Colors.white70),
                   ),
                 ),
