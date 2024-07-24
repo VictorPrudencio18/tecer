@@ -246,7 +246,7 @@ class ProfileDetails extends StatelessWidget {
               SizedBox(height: 10),
               Text(
                 userData['name'] ?? 'Nome',
-                style: theme.textTheme.headline6?.copyWith(color: Colors.white),
+                style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
               ),
               Text(
                 userData['surname'] ?? 'Sobrenome',
